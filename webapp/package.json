@@ -24,6 +24,9 @@
 		"updatesnapshots": "jest --updateSnapshot"
 	},
 	"dependencies": {
+		"@fullcalendar/daygrid": "^5.8.0",
+		"@fullcalendar/interaction": "^5.8.0",
+		"@fullcalendar/react": "^5.8.0",
 		"emoji-mart": "^3.0.1",
 		"imagemin-gifsicle": "^7.0.0",
 		"imagemin-mozjpeg": "^9.0.0",
