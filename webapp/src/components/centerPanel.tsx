@@ -24,9 +24,9 @@ import Kanban from './kanban/kanban'
 
 // import Table from './table/table'
 
-// import CalendarView from './calendar/calendar'
+import CalendarView from './calendar/calendar'
 
-import CalendarFullView from './calendar/fullcalendar'
+// import CalendarFullView from './calendar/fullCalendar'
 import Gallery from './gallery/gallery'
 
 type Props = {
@@ -166,16 +166,10 @@ class CenterPanel extends React.Component<Props, State> {
 
                 {activeView.viewType === 'table' &&
 
-                // <Table
-                //     boardTree={boardTree}
-                //     selectedCardIds={this.state.selectedCardIds}
-                //     readonly={this.props.readonly}
-                //     cardIdToFocusOnRender={this.state.cardIdToFocusOnRender}
-                //     showCard={this.showCard}
-                //     addCard={this.addCard}
-                //     onCardClicked={this.cardClicked}
-                // />}
-                    <CalendarFullView
+                    // <CalendarFullView
+                    //     boardTree={boardTree}
+                    // />}
+                    <CalendarView
                         boardTree={boardTree}
                     />}
                 {activeView.viewType === 'gallery' &&
