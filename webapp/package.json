@@ -1,6 +1,6 @@
 {
 	"name": "focalboard",
-	"version": "0.6.7",
+	"version": "0.8.0",
 	"private": true,
 	"description": "",
 	"scripts": {
@@ -57,7 +57,7 @@
 		},
 		"globals": {
 			"ts-jest": {
-				"tsConfig": "./src/tsconfig.json"
+				"tsconfig": "./src/tsconfig.json"
 			}
 		},
 		"transform": {

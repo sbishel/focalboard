@@ -14,6 +14,7 @@ import {BoardTree} from '../viewModel/boardTree'
 import {UserSettings} from '../userSettings'
 
 import './centerPanel.scss'
+
 import CardDialog from './cardDialog'
 import RootPortal from './rootPortal'
 import TopBar from './topBar'
@@ -123,16 +124,16 @@ class CenterPanel extends React.Component<Props, State> {
                     onKeyDown={this.keydownHandler}
                 />
                 {this.state.shownCardId &&
-                <RootPortal>
-                    <CardDialog
-                        key={this.state.shownCardId}
-                        boardTree={boardTree}
-                        cardId={this.state.shownCardId}
-                        onClose={() => this.showCard(undefined)}
-                        showCard={(cardId) => this.showCard(cardId)}
-                        readonly={this.props.readonly}
-                    />
-                </RootPortal>}
+                    <RootPortal>
+                        <CardDialog
+                            key={this.state.shownCardId}
+                            boardTree={boardTree}
+                            cardId={this.state.shownCardId}
+                            onClose={() => this.showCard(undefined)}
+                            showCard={(cardId) => this.showCard(cardId)}
+                            readonly={this.props.readonly}
+                        />
+                    </RootPortal>}
 
                 <div className='top-head'>
                     <TopBar/>
@@ -160,6 +161,7 @@ class CenterPanel extends React.Component<Props, State> {
                     readonly={this.props.readonly}
                     onCardClicked={this.cardClicked}
                     addCard={this.addCard}
+                    showCard={this.showCard}
                 />}
 
                 {activeView.viewType === 'table' &&
@@ -177,13 +179,13 @@ class CenterPanel extends React.Component<Props, State> {
                         boardTree={boardTree}
                     />}
                 {activeView.viewType === 'gallery' &&
-                <Gallery
-                    boardTree={boardTree}
-                    readonly={this.props.readonly}
-                    onCardClicked={this.cardClicked}
-                    selectedCardIds={this.state.selectedCardIds}
-                    addCard={(show) => this.addCard('', show)}
-                />}
+                    <Gallery
+                        boardTree={boardTree}
+                        readonly={this.props.readonly}
+                        onCardClicked={this.cardClicked}
+                        selectedCardIds={this.state.selectedCardIds}
+                        addCard={(show) => this.addCard('', show)}
+                    />}
 
             </div>
         )
