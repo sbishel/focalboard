@@ -22,6 +22,9 @@ const workspaceSlice = createSlice({
         setWorkspace: (state, action: PayloadAction<IWorkspace>) => {
             state.value = action.payload
         },
+        setUserWorkspaces: (state, action: PayloadAction<UserWorkspace[]>) => {
+            state.userWorkspaces = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initialLoad.fulfilled, (state, action) => {
@@ -33,7 +36,7 @@ const workspaceSlice = createSlice({
     },
 })
 
-export const {setWorkspace} = workspaceSlice.actions
+export const {setWorkspace, setUserWorkspaces} = workspaceSlice.actions
 export const {reducer} = workspaceSlice
 
 export function getWorkspace(state: RootState): IWorkspace|null {
