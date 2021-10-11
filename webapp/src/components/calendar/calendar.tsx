@@ -59,7 +59,7 @@ type Props = {
     board: Board
     activeView: BoardView
     cards: Card[]
-    displayByProperty?: IPropertyTemplate
+    dateDisplayProperty?: IPropertyTemplate
     showCard: (cardId: string) => void
     addCard: () => void
 
@@ -72,21 +72,21 @@ const CalendarView = (props: Props): JSX.Element|null => {
     const timeZoneOffset = new Date().getTimezoneOffset() * 60 * 1000
     const [dragEvent, setDragEvent] = useState<CalendarEvent>()
 
-    let displayByProperty = props.displayByProperty
-    if (!displayByProperty) {
+    let dateDisplayProperty = props.dateDisplayProperty
+    if (!dateDisplayProperty) {
         // Find first date property
         // TODO: Should we look for CreateAt, ModifyAt. Must be a defined property to set.
         // Otherwise don't set and just use createAt below.
-        displayByProperty = board.fields.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')
-        if (displayByProperty) {
-            mutator.changeViewDateDisplayId(activeView.id, activeView.fields.dateDisplayId, displayByProperty.id)
+        dateDisplayProperty = board.fields.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')
+        if (dateDisplayProperty) {
+            mutator.changeViewDateDisplayId(activeView.id, activeView.fields.dateDisplayId, dateDisplayProperty.id)
         }
     }
-    const displayByPropertyID = displayByProperty?.id
+    const dateDisplayPropertyID = dateDisplayProperty?.id
 
     const myEventsList = props.cards.flatMap((card) => {
-        if (displayByPropertyID && displayByProperty?.type !== 'createdTime') {
-            const dateProperty = createDatePropertyFromString(card.fields.properties[displayByPropertyID || ''] as string)
+        if (dateDisplayPropertyID && dateDisplayProperty?.type !== 'createdTime') {
+            const dateProperty = createDatePropertyFromString(card.fields.properties[dateDisplayPropertyID || ''] as string)
             if (!dateProperty.from) {
                 return []
             }
@@ -137,8 +137,8 @@ const CalendarView = (props: Props): JSX.Element|null => {
             range.to = dateTo
         }
 
-        if (card && displayByProperty) {
-            mutator.changePropertyValue(card, displayByProperty.id, JSON.stringify(range))
+        if (card && dateDisplayProperty) {
+            mutator.changePropertyValue(card, dateDisplayProperty.id, JSON.stringify(range))
         }
     }
 
@@ -156,8 +156,8 @@ const CalendarView = (props: Props): JSX.Element|null => {
             range.to = dateTo
         }
 
-        if (card && displayByProperty) {
-            mutator.changePropertyValue(card, displayByProperty.id, JSON.stringify(range))
+        if (card && dateDisplayProperty) {
+            mutator.changePropertyValue(card, dateDisplayProperty.id, JSON.stringify(range))
         }
     }
 
@@ -177,15 +177,15 @@ const CalendarView = (props: Props): JSX.Element|null => {
         if (dragEvent) {
             const card = cards.find((o) => o.id === dragEvent.id)
 
-            if (card && displayByProperty) {
-                const originalDate = createDatePropertyFromString(card.fields.properties[displayByPropertyID || ''] as string)
+            if (card && dateDisplayProperty) {
+                const originalDate = createDatePropertyFromString(card.fields.properties[dateDisplayPropertyID || ''] as string)
 
                 const dateFrom = startDate.getTime() - timeZoneOffset
                 const range : DateProperty = {from: dateFrom}
                 if (originalDate.to && originalDate.from !== originalDate.to) {
                     range.to = endDate.getTime() - timeZoneOffset
                 }
-                mutator.changePropertyValue(card, displayByProperty.id, JSON.stringify(range))
+                mutator.changePropertyValue(card, dateDisplayProperty.id, JSON.stringify(range))
             }
             setDragEvent(undefined)
         }

@@ -41,7 +41,7 @@ type Props = {
     activeView: BoardView
     views: BoardView[]
     groupByProperty?: IPropertyTemplate
-    displayByProperty?: IPropertyTemplate
+    dateDisplayProperty?: IPropertyTemplate
     intl: IntlShape
     readonly: boolean
     addCard: (card: Card) => void
@@ -153,7 +153,7 @@ class CenterPanel extends React.Component<Props, State> {
                         cards={this.props.cards}
                         views={this.props.views}
                         groupByProperty={this.props.groupByProperty}
-                        displayByProperty={this.props.displayByProperty}
+                        dateDisplayProperty={this.props.dateDisplayProperty}
                         addCard={() => this.addCard('', true)}
                         addCardFromTemplate={this.addCardFromTemplate}
                         addCardTemplate={this.addCardTemplate}
@@ -201,7 +201,7 @@ class CenterPanel extends React.Component<Props, State> {
                         board={this.props.board}
                         activeView={this.props.activeView}
                         cards={this.props.cards}
-                        displayByProperty={this.props.displayByProperty}
+                        dateDisplayProperty={this.props.dateDisplayProperty}
                         showCard={this.showCard}
                         addCard={this.addCard}
                     />}

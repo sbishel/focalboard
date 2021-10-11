@@ -32,7 +32,7 @@ function CenterContent(props: Props) {
     const activeView = useAppSelector(getView(match.params.viewId))
     const views = useAppSelector(getCurrentBoardViews)
     const groupByProperty = useAppSelector(getCurrentViewGroupBy)
-    const displayByProperty = useAppSelector(getCurrentViewDisplayBy)
+    const dateDisplayProperty = useAppSelector(getCurrentViewDisplayBy)
     const clientConfig = useAppSelector(getClientConfig)
     const history = useHistory()
     const dispatch = useAppDispatch()
@@ -62,7 +62,7 @@ function CenterContent(props: Props) {
             property = board?.fields.cardProperties.find((o) => o.type === 'select')
         }
 
-        const displayProperty = displayByProperty
+        const displayProperty = dateDisplayProperty
         return (
             <CenterPanel
                 readonly={props.readonly}
@@ -72,7 +72,7 @@ function CenterContent(props: Props) {
                 showCard={showCard}
                 activeView={activeView}
                 groupByProperty={property}
-                displayByProperty={displayProperty}
+                dateDisplayProperty={displayProperty}
                 views={views}
                 showShared={clientConfig?.enablePublicSharedBoards || false}
             />

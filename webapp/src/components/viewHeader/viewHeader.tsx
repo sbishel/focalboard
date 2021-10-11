@@ -39,13 +39,13 @@ type Props = {
     editCardTemplate: (cardTemplateId: string) => void
     readonly: boolean
     showShared: boolean
-    displayByProperty?: IPropertyTemplate
+    dateDisplayProperty?: IPropertyTemplate
 }
 
 const ViewHeader = React.memo((props: Props) => {
     const [showFilter, setShowFilter] = useState(false)
 
-    const {board, activeView, views, groupByProperty, cards, showShared, displayByProperty} = props
+    const {board, activeView, views, groupByProperty, cards, showShared, dateDisplayProperty} = props
 
     const withGroupBy = activeView.fields.viewType === 'board' || activeView.fields.viewType === 'table'
     const withDisplayBy = activeView.fields.viewType === 'calendar'
@@ -110,7 +110,7 @@ const ViewHeader = React.memo((props: Props) => {
                     <ViewHeaderDisplayByMenu
                         properties={board.fields.cardProperties}
                         activeView={activeView}
-                        displayByPropertyName={displayByProperty?.name}
+                        dateDisplayPropertyName={dateDisplayProperty?.name}
                     />}
 
                 {/* Filter */}

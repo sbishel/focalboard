@@ -17,15 +17,12 @@ import CheckIcon from '../../widgets/icons/check'
 type Props = {
     properties: readonly IPropertyTemplate[]
     activeView: BoardView
-    displayByPropertyName?: string
+    dateDisplayPropertyName?: string
 }
 
 const ViewHeaderDisplayByMenu = React.memo((props: Props) => {
-    const {properties, activeView, displayByPropertyName} = props
+    const {properties, activeView, dateDisplayPropertyName} = props
 
-    // properties?.map((o: IPropertyTemplate) => Utils.log(o.name + o.type))
-
-    const intl = useIntl()
     return (
         <MenuWrapper>
             <Button>
@@ -38,7 +35,7 @@ const ViewHeaderDisplayByMenu = React.memo((props: Props) => {
                                 style={{color: 'rgb(var(--center-channel-color-rgb))'}}
                                 id='displayByLabel'
                             >
-                                {displayByPropertyName}
+                                {dateDisplayPropertyName}
                             </span>
                         ),
                     }}
