@@ -79,7 +79,7 @@ const CalendarView = (props: Props): JSX.Element|null => {
         // Otherwise don't set and just use createAt below.
         dateDisplayProperty = board.fields.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')
         if (dateDisplayProperty) {
-            mutator.changeViewDateDisplayId(activeView.id, activeView.fields.dateDisplayId, dateDisplayProperty.id)
+            mutator.changeViewDateDisplayPropertyId(activeView.id, activeView.fields.dateDisplayPropertyId, dateDisplayProperty.id)
         }
     }
     const dateDisplayPropertyID = dateDisplayProperty?.id

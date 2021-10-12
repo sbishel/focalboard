@@ -524,13 +524,13 @@ class Mutator {
         )
     }
 
-    async changeViewDateDisplayId(viewId: string, oldDateDisplayId: string|undefined, dateDisplayId: string): Promise<void> {
+    async changeViewDateDisplayPropertyId(viewId: string, oldDateDisplayPropertyId: string|undefined, dateDisplayPropertyId: string): Promise<void> {
         await undoManager.perform(
             async () => {
-                await octoClient.patchBlock(viewId, {updatedFields: {dateDisplayId}})
+                await octoClient.patchBlock(viewId, {updatedFields: {dateDisplayPropertyId}})
             },
             async () => {
-                await octoClient.patchBlock(viewId, {updatedFields: {dateDisplayId: oldDateDisplayId}})
+                await octoClient.patchBlock(viewId, {updatedFields: {dateDisplayPropertyId: oldDateDisplayPropertyId}})
             },
             'display by',
             this.undoDisplayId,

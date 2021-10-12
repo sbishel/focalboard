@@ -47,13 +47,13 @@ const ViewHeaderDisplayByMenu = React.memo((props: Props) => {
                         key={date.id}
                         id={date.id}
                         name={date.name}
-                        rightIcon={activeView.fields.dateDisplayId === date.id ? <CheckIcon/> : undefined}
+                        rightIcon={activeView.fields.dateDisplayPropertyId === date.id ? <CheckIcon/> : undefined}
                         onClick={(id) => {
-                            if (activeView.fields.dateDisplayId === id) {
+                            if (activeView.fields.dateDisplayPropertyId === id) {
                                 return
                             }
 
-                            mutator.changeViewDateDisplayId(activeView.id, activeView.fields.dateDisplayId, id)
+                            mutator.changeViewDateDisplayPropertyId(activeView.id, activeView.fields.dateDisplayPropertyId, id)
                         }}
                     />
                 ))}

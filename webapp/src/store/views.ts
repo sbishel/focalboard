@@ -110,6 +110,6 @@ export const getCurrentViewDisplayBy = createSelector(
         if (!currentView) {
             return undefined
         }
-        return currentBoard.fields.cardProperties.find((o) => o.id === currentView.fields.dateDisplayId)
+        return currentBoard.fields.cardProperties.find((o) => o.id === currentView.fields.dateDisplayPropertyId)
     },
 )
