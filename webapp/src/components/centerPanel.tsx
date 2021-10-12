@@ -32,7 +32,6 @@ import Table from './table/table'
 
 import CalendarView from './calendar/calendar'
 
-// import CalendarFullView from './calendar/fullCalendar'
 import Gallery from './gallery/gallery'
 
 type Props = {

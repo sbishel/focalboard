@@ -59,6 +59,7 @@ type Props = {
     board: Board
     activeView: BoardView
     cards: Card[]
+
     dateDisplayProperty?: IPropertyTemplate
     showCard: (cardId: string) => void
     addCard: () => void
@@ -82,11 +83,12 @@ const CalendarView = (props: Props): JSX.Element|null => {
             mutator.changeViewDateDisplayPropertyId(activeView.id, activeView.fields.dateDisplayPropertyId, dateDisplayProperty.id)
         }
     }
-    const dateDisplayPropertyID = dateDisplayProperty?.id
+
+    // const dateDisplayPropertyID = dateDisplayProperty?.id
 
     const myEventsList = props.cards.flatMap((card) => {
-        if (dateDisplayPropertyID && dateDisplayProperty?.type !== 'createdTime') {
-            const dateProperty = createDatePropertyFromString(card.fields.properties[dateDisplayPropertyID || ''] as string)
+        if (dateDisplayProperty && dateDisplayProperty?.type !== 'createdTime') {
+            const dateProperty = createDatePropertyFromString(card.fields.properties[dateDisplayProperty.id || ''] as string)
             if (!dateProperty.from) {
                 return []
             }
@@ -104,6 +106,7 @@ const CalendarView = (props: Props): JSX.Element|null => {
                 end: dateTo,
             }]
         }
+        console.log('returning ' + card.createAt)
         return [{
             id: card.id,
             title: card.title,
@@ -128,6 +131,7 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const onEventResize = (args: any) => {
+        console.log('eventresize')
         const card = cards.find((o) => o.id === args.event.id)
         const dateFrom = args.start.getTime() - timeZoneOffset
         const dateTo = args.end.getTime() - timeZoneOffset - (60 * 60 * 24 * 1000) // subtract one day. Calendar is date exclusive
@@ -143,6 +147,7 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const onEventDrop = (args: {event: CalendarEvent, start: Date|string, end: Date|string, isAllDay: boolean}) => {
+        console.log('oneventdrop')
         const startDate = new Date(args.start)
         const endDate = new Date(args.end)
 
@@ -162,23 +167,34 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const handleDragStart = (event: CalendarEvent) => {
+        console.log('handleDragStart')
         setDragEvent(event)
     }
 
     const onDragOver = (event: DragEvent) => {
-        if (dragEvent) {
-            event.preventDefault()
-        }
+        console.log('onDragOver')
+
+        // if (dragEvent) {
+        event.preventDefault()
+
+        // }
+    }
+
+    const onDragStart = (event: any) => {
+        console.log('onDragStart')
+        console.log(event)
     }
 
     const onDropFromOutside = (args: {start: Date|string, end: Date|string, allDay: boolean}) => {
+        console.log('onDropFromOutside')
+
         const startDate = new Date(args.start)
         const endDate = new Date(args.end)
         if (dragEvent) {
             const card = cards.find((o) => o.id === dragEvent.id)
 
             if (card && dateDisplayProperty) {
-                const originalDate = createDatePropertyFromString(card.fields.properties[dateDisplayPropertyID || ''] as string)
+                const originalDate = createDatePropertyFromString(card.fields.properties[dateDisplayProperty.id || ''] as string)
 
                 const dateFrom = startDate.getTime() - timeZoneOffset
                 const range : DateProperty = {from: dateFrom}
@@ -215,6 +231,7 @@ const CalendarView = (props: Props): JSX.Element|null => {
                 handleDragStart={handleDragStart}
                 onDropFromOutside={onDropFromOutside}
                 onDragOver={onDragOver}
+                onDragStart={onDragStart}
             />
         </div>
     )
