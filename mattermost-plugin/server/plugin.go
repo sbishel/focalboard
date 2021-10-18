@@ -107,10 +107,9 @@ func (p *Plugin) OnActivate() error {
 	}
 
 	featureFlags := make(map[string]string)
-	for k, v := range mmconfig.FeatureFlags.ToMap() {
-\		if strings.HasPrefix(k, "Boards") {
-			featureFlags[k] = v
-		}
+	parsedFlags := strings.Split(mmconfig.FeatureFlags.BoardsFeatureFlags, ",")
+	for _, flag := range parsedFlags {
+		featureFlags[flag] = "true"
 	}
 
 	cfg := &config.Configuration{

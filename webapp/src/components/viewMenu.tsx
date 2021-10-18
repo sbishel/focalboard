@@ -195,12 +195,6 @@ const ViewMenu = React.memo((props: Props) => {
             })
     }, [props.board, props.activeView, props.intl, showView])
 
-    // const enableCalendarView = useCallback(() => {
-    //     console.log('ENABLECALENDARVIEW')
-    //     console.log(clientConfig)
-    //     return clientConfig.enableCalendarView || false
-    // }, [clientConfig])
-
     const {views, intl} = props
 
     const duplicateViewText = intl.formatMessage({
@@ -284,7 +278,7 @@ const ViewMenu = React.memo((props: Props) => {
                         icon={<GalleryIcon/>}
                         onClick={handleAddViewGallery}
                     />
-                    {clientConfig.featureFlags.BoardsCalendarView &&
+                    {clientConfig.featureFlags.CalendarView &&
                         <Menu.Text
                             id='calendar'
                             name='Calendar'
