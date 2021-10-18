@@ -202,7 +202,7 @@ class CenterPanel extends React.Component<Props, State> {
                         cards={this.props.cards}
                         dateDisplayProperty={this.props.dateDisplayProperty}
                         showCard={this.showCard}
-                        addCard={this.addCard}
+                        addCard={() => this.addCard('', true)}
                     />}
 
                 {activeView.fields.viewType === 'gallery' &&

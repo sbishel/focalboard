@@ -3,11 +3,7 @@
 
 import React, {DragEvent, ComponentType, useState} from 'react'
 
-// import {FormattedMessage} from 'react-intl'
-
-// import {BlockIcons} from '../../blockIcons'
-// import mutator from '../../mutator'
-import {Calendar, CalendarProps, momentLocalizer, EventProps} from 'react-big-calendar'
+import {Calendar, CalendarProps, momentLocalizer} from 'react-big-calendar'
 
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 
@@ -74,28 +70,38 @@ const CalendarView = (props: Props): JSX.Element|null => {
     const [dragEvent, setDragEvent] = useState<CalendarEvent>()
 
     let dateDisplayProperty = props.dateDisplayProperty
+    console.log('here ')
+
+    console.log(dateDisplayProperty)
     if (!dateDisplayProperty) {
+        console.log('here here')
+
         // Find first date property
         // TODO: Should we look for CreateAt, ModifyAt. Must be a defined property to set.
         // Otherwise don't set and just use createAt below.
         dateDisplayProperty = board.fields.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')
         if (dateDisplayProperty) {
+            console.log('here here here')
             mutator.changeViewDateDisplayPropertyId(activeView.id, activeView.fields.dateDisplayPropertyId, dateDisplayProperty.id)
         }
     }
+    console.log('fail')
 
     // const dateDisplayPropertyID = dateDisplayProperty?.id
 
     const myEventsList = props.cards.flatMap((card) => {
         if (dateDisplayProperty && dateDisplayProperty?.type !== 'createdTime') {
+            console.log('myEventsList')
             const dateProperty = createDatePropertyFromString(card.fields.properties[dateDisplayProperty.id || ''] as string)
             if (!dateProperty.from) {
                 return []
             }
+            console.log(dateProperty)
             const dateFrom = dateProperty.from ? new Date(dateProperty.from + (dateProperty.includeTime ? 0 : timeZoneOffset)) : new Date()
             const dateToNumber = dateProperty.to ? dateProperty.to + (dateProperty.includeTime ? 0 : timeZoneOffset) : dateFrom.getTime()
             const dateTo = new Date(dateToNumber + (60 * 60 * 24 * 1000)) // Add one day.
 
+            console.log('return valid')
             return [{
                 id: card.id,
                 title: card.title,
@@ -118,12 +124,8 @@ const CalendarView = (props: Props): JSX.Element|null => {
         }]
     })
 
-    const EventComponent = (eventProps: EventProps<CalendarEvent>): JSX.Element|null => {
-        return (
-            <div>
-                {eventProps.title}
-            </div>
-        )
+    const onNewEvent = () => {
+        props.addCard()
     }
 
     const onSelectCard = (event: CalendarEvent) => {
@@ -216,22 +218,22 @@ const CalendarView = (props: Props): JSX.Element|null => {
             <DragAndDropCalendar
                 selectable={true}
                 popup={true}
-                popupOffset={-30}
                 className='DragAndDropCalendar'
                 localizer={localizer}
                 events={myEventsList}
                 views={['week', 'month']}
-                components={{
-                    event: EventComponent,
-                    toolbar: CustomToolbar,
-                }}
-                onSelectEvent={(event) => onSelectCard(event)}
-                onEventDrop={onEventDrop}
-                onEventResize={onEventResize}
-                handleDragStart={handleDragStart}
-                onDropFromOutside={onDropFromOutside}
-                onDragOver={onDragOver}
-                onDragStart={onDragStart}
+
+                // components={{
+                //     toolbar: CustomToolbar,
+                // }}
+                // onSelectSlot={onNewEvent}
+                // onSelectEvent={(event) => onSelectCard(event)}
+                // onEventDrop={onEventDrop}
+                // onEventResize={onEventResize}
+                // handleDragStart={handleDragStart}
+                // onDropFromOutside={onDropFromOutside}
+                // onDragOver={onDragOver}
+                // onDragStart={onDragStart}
             />
         </div>
     )
