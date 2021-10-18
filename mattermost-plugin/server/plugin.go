@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/mattermost/focalboard/server/auth"
@@ -105,6 +106,12 @@ func (p *Plugin) OnActivate() error {
 		enablePublicSharedBoards = true
 	}
 
+	featureFlags := make(map[string]string)
+	parsedFlags := strings.Split(mmconfig.FeatureFlags.BoardsFeatureFlags, ",")
+	for _, flag := range parsedFlags {
+		featureFlags[flag] = "true"
+	}
+
 	cfg := &config.Configuration{
 		ServerRoot:               baseURL + "/plugins/focalboard",
 		Port:                     -1,
@@ -127,6 +134,7 @@ func (p *Plugin) OnActivate() error {
 		LocalModeSocketLocation:  "",
 		AuthMode:                 "mattermost",
 		EnablePublicSharedBoards: enablePublicSharedBoards,
+		FeatureFlags:             featureFlags,
 	}
 	var db store.Store
 	db, err = sqlstore.New(cfg.DBType, cfg.DBConfigString, cfg.DBTablePrefix, logger, sqlDB, true)

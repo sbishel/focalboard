@@ -16,6 +16,8 @@ import DuplicateIcon from '../widgets/icons/duplicate'
 import TableIcon from '../widgets/icons/table'
 import GalleryIcon from '../widgets/icons/gallery'
 import Menu from '../widgets/menu'
+import {useAppSelector} from '../store/hooks'
+import {getClientConfig} from '../store/clientConfig'
 
 type Props = {
     board: Board,
@@ -28,6 +30,7 @@ type Props = {
 const ViewMenu = React.memo((props: Props) => {
     const history = useHistory()
     const match = useRouteMatch()
+    const clientConfig = useAppSelector(getClientConfig)
 
     const showView = useCallback((viewId) => {
         let newPath = generatePath(match.path, {...match.params, viewId: viewId || ''})
@@ -169,7 +172,12 @@ const ViewMenu = React.memo((props: Props) => {
         Utils.log('addview-gallery')
         const view = createBoardView()
         view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar View'})
+<<<<<<< HEAD
         view.fields.viewType = 'calendar'
+=======
+
+        // view.fields.viewType = 'calendar'
+>>>>>>> feature_flags
         view.parentId = board.id
         view.rootId = board.rootId
         view.fields.visiblePropertyIds = [Constants.titleColumnId]
@@ -274,12 +282,14 @@ const ViewMenu = React.memo((props: Props) => {
                         icon={<GalleryIcon/>}
                         onClick={handleAddViewGallery}
                     />
-                    <Menu.Text
-                        id='calendar'
-                        name='Calendar'
-                        icon={<TableIcon/>}
-                        onClick={handleAddViewCalendar}
-                    />
+                    {clientConfig.featureFlags.CalendarView &&
+                        <Menu.Text
+                            id='calendar'
+                            name='Calendar'
+                            icon={<TableIcon/>}
+                            onClick={handleAddViewCalendar}
+                        />
+                    }
                 </Menu.SubMenu>
             }
         </Menu>
