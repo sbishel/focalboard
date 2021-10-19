@@ -9,6 +9,7 @@ import {BoardView, IViewType, sortBoardViewsAlphabetically} from '../../blocks/b
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
 import BoardIcon from '../../widgets/icons/board'
+import CalendarIcon from '../../widgets/icons/calendar'
 import DeleteIcon from '../../widgets/icons/delete'
 import DisclosureTriangle from '../../widgets/icons/disclosureTriangle'
 import DuplicateIcon from '../../widgets/icons/duplicate'
@@ -56,6 +57,7 @@ const SidebarBoardItem = React.memo((props: Props) => {
         case 'board': return <BoardIcon/>
         case 'table': return <TableIcon/>
         case 'gallery': return <GalleryIcon/>
+        case 'calendar': return <CalendarIcon/>
         default: return <div/>
         }
     }

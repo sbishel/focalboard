@@ -11,6 +11,7 @@ import mutator from '../mutator'
 import {Utils, IDType} from '../utils'
 import AddIcon from '../widgets/icons/add'
 import BoardIcon from '../widgets/icons/board'
+import CalendarIcon from '../widgets/icons/calendar'
 import DeleteIcon from '../widgets/icons/delete'
 import DuplicateIcon from '../widgets/icons/duplicate'
 import TableIcon from '../widgets/icons/table'
@@ -172,12 +173,7 @@ const ViewMenu = React.memo((props: Props) => {
         Utils.log('addview-gallery')
         const view = createBoardView()
         view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar View'})
-<<<<<<< HEAD
         view.fields.viewType = 'calendar'
-=======
-
-        // view.fields.viewType = 'calendar'
->>>>>>> feature_flags
         view.parentId = board.id
         view.rootId = board.rootId
         view.fields.visiblePropertyIds = [Constants.titleColumnId]
@@ -282,14 +278,14 @@ const ViewMenu = React.memo((props: Props) => {
                         icon={<GalleryIcon/>}
                         onClick={handleAddViewGallery}
                     />
-                    {clientConfig.featureFlags.CalendarView &&
-                        <Menu.Text
-                            id='calendar'
-                            name='Calendar'
-                            icon={<TableIcon/>}
-                            onClick={handleAddViewCalendar}
-                        />
-                    }
+                    {/* {clientConfig.featureFlags.CalendarView && */}
+                    <Menu.Text
+                        id='calendar'
+                        name='Calendar'
+                        icon={<CalendarIcon/>}
+                        onClick={handleAddViewCalendar}
+                    />
+                    {/* } */}
                 </Menu.SubMenu>
             }
         </Menu>

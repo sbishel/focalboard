@@ -70,38 +70,29 @@ const CalendarView = (props: Props): JSX.Element|null => {
     const [dragEvent, setDragEvent] = useState<CalendarEvent>()
 
     let dateDisplayProperty = props.dateDisplayProperty
-    console.log('here ')
 
-    console.log(dateDisplayProperty)
     if (!dateDisplayProperty) {
-        console.log('here here')
-
         // Find first date property
         // TODO: Should we look for CreateAt, ModifyAt. Must be a defined property to set.
         // Otherwise don't set and just use createAt below.
         dateDisplayProperty = board.fields.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')
         if (dateDisplayProperty) {
-            console.log('here here here')
             mutator.changeViewDateDisplayPropertyId(activeView.id, activeView.fields.dateDisplayPropertyId, dateDisplayProperty.id)
         }
     }
-    console.log('fail')
 
     // const dateDisplayPropertyID = dateDisplayProperty?.id
 
     const myEventsList = props.cards.flatMap((card) => {
         if (dateDisplayProperty && dateDisplayProperty?.type !== 'createdTime') {
-            console.log('myEventsList')
             const dateProperty = createDatePropertyFromString(card.fields.properties[dateDisplayProperty.id || ''] as string)
             if (!dateProperty.from) {
                 return []
             }
-            console.log(dateProperty)
             const dateFrom = dateProperty.from ? new Date(dateProperty.from + (dateProperty.includeTime ? 0 : timeZoneOffset)) : new Date()
             const dateToNumber = dateProperty.to ? dateProperty.to + (dateProperty.includeTime ? 0 : timeZoneOffset) : dateFrom.getTime()
             const dateTo = new Date(dateToNumber + (60 * 60 * 24 * 1000)) // Add one day.
 
-            console.log('return valid')
             return [{
                 id: card.id,
                 title: card.title,
@@ -112,7 +103,6 @@ const CalendarView = (props: Props): JSX.Element|null => {
                 end: dateTo,
             }]
         }
-        console.log('returning ' + card.createAt)
         return [{
             id: card.id,
             title: card.title,
@@ -133,7 +123,6 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const onEventResize = (args: any) => {
-        console.log('eventresize')
         const card = cards.find((o) => o.id === args.event.id)
         const dateFrom = args.start.getTime() - timeZoneOffset
         const dateTo = args.end.getTime() - timeZoneOffset - (60 * 60 * 24 * 1000) // subtract one day. Calendar is date exclusive
@@ -149,7 +138,6 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const onEventDrop = (args: {event: CalendarEvent, start: Date|string, end: Date|string, isAllDay: boolean}) => {
-        console.log('oneventdrop')
         const startDate = new Date(args.start)
         const endDate = new Date(args.end)
 
@@ -169,16 +157,12 @@ const CalendarView = (props: Props): JSX.Element|null => {
     }
 
     const handleDragStart = (event: CalendarEvent) => {
-        console.log('handleDragStart')
         setDragEvent(event)
     }
 
     const onDragOver = (event: DragEvent) => {
-        console.log('onDragOver')
-
         // if (dragEvent) {
         event.preventDefault()
-
         // }
     }
 
@@ -223,17 +207,17 @@ const CalendarView = (props: Props): JSX.Element|null => {
                 events={myEventsList}
                 views={['week', 'month']}
 
-                // components={{
-                //     toolbar: CustomToolbar,
-                // }}
-                // onSelectSlot={onNewEvent}
-                // onSelectEvent={(event) => onSelectCard(event)}
-                // onEventDrop={onEventDrop}
-                // onEventResize={onEventResize}
-                // handleDragStart={handleDragStart}
-                // onDropFromOutside={onDropFromOutside}
-                // onDragOver={onDragOver}
-                // onDragStart={onDragStart}
+                components={{
+                    toolbar: CustomToolbar,
+                }}
+                onSelectSlot={onNewEvent}
+                onSelectEvent={(event) => onSelectCard(event)}
+                onEventDrop={onEventDrop}
+                onEventResize={onEventResize}
+                handleDragStart={handleDragStart}
+                onDropFromOutside={onDropFromOutside}
+                onDragOver={onDragOver}
+                onDragStart={onDragStart}
             />
         </div>
     )
