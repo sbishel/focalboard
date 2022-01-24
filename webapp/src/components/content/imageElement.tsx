@@ -2,6 +2,8 @@
 // See LICENSE.txt for license information.
 import React, {useEffect, useState} from 'react'
 
+import {useIntl} from 'react-intl'
+
 import {ContentBlock} from '../../blocks/contentBlock'
 import {ImageBlock, createImageBlock} from '../../blocks/imageBlock'
 import octoClient from '../../octoClient'
@@ -14,9 +16,16 @@ type Props = {
     block: ContentBlock
 }
 
+class FileSizeError extends Error {
+    fileSize: number
+    constructor(fileSize: number) {
+        super()
+        this.fileSize = fileSize
+    }
+}
+
 const ImageElement = React.memo((props: Props): JSX.Element|null => {
     const [imageDataUrl, setImageDataUrl] = useState<string|null>(null)
-
     const {block} = props
 
     useEffect(() => {
@@ -48,13 +57,18 @@ contentRegistry.registerContentType({
     getIcon: () => <ImageIcon/>,
     createBlock: async (rootId: string) => {
         return new Promise<ImageBlock>(
-            (resolve) => {
+            (resolve, reject) => {
                 Utils.selectLocalFile(async (file) => {
-                    const fileId = await octoClient.uploadFile(rootId, file)
-
-                    const block = createImageBlock()
-                    block.fields.fileId = fileId || ''
-                    resolve(block)
+                    const clientConfig = await octoClient.getClientConfig()
+                    const maxFileSize = clientConfig?.maximum_file_size || 0
+                    if (maxFileSize > 0 && file.size > maxFileSize) {
+                        reject(new FileSizeError(maxFileSize))
+                    } else {
+                        const fileId = await octoClient.uploadFile(rootId, file)
+                        const block = createImageBlock()
+                        block.fields.fileId = fileId || ''
+                        resolve(block)
+                    }
                 },
                 '.jpg,.jpeg,.png')
             },
@@ -66,3 +80,5 @@ contentRegistry.registerContentType({
 })
 
 export default ImageElement
+
+export type {FileSizeError}

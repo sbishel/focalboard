@@ -6,4 +6,5 @@ export type ClientConfig = {
     telemetryid: string,
     enablePublicSharedBoards: boolean,
     featureFlags: Record<string, string>,
+    maximum_file_size: number,
 }

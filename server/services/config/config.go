@@ -49,6 +49,7 @@ type Configuration struct {
 	LocalModeSocketLocation  string            `json:"localModeSocketLocation" mapstructure:"localModeSocketLocation"`
 	EnablePublicSharedBoards bool              `json:"enablePublicSharedBoards" mapstructure:"enablePublicSharedBoards"`
 	FeatureFlags             map[string]string `json:"featureFlags" mapstructure:"featureFlags"`
+	MaximumFileSize          int64             `json:"maximum_file_size" mapstructure:"maximum_file_size"`
 
 	AuthMode string `json:"authMode" mapstructure:"authMode"`
 
@@ -94,7 +95,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("AuthMode", "native")
 	viper.SetDefault("NotifyFreqCardSeconds", 120)    // 2 minutes after last card edit
 	viper.SetDefault("NotifyFreqBoardSeconds", 86400) // 1 day after last card edit
-
+	viper.SetDefault("MaximumFileSize", 0)
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		return nil, err

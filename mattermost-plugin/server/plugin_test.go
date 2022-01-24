@@ -95,4 +95,13 @@ func TestSetConfiguration(t *testing.T) {
 		assert.Equal(t, "true", config.FeatureFlags["hello_world"])
 		assert.Equal(t, "true", config.FeatureFlags["myTest"])
 	})
+
+	t.Run("test set max file size", func(t *testing.T) {
+		testFileSize := int64(1000000)
+		mmConfig := baseConfig
+		mmConfig.FileSettings.MaxFileSize = &testFileSize
+		config := plugin.createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, testFileSize, config.MaxFileSize)
+	})
+
 }

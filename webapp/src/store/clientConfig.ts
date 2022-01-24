@@ -24,7 +24,7 @@ const clientConfigSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(fetchClientConfig.fulfilled, (state, action) => {
-            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, featureFlags: {}}
+            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, featureFlags: {}, maximum_file_size: 0}
         })
     },
 })

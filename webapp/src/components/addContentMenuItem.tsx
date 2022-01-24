@@ -37,17 +37,18 @@ const AddContentMenuItem = React.memo((props:Props): JSX.Element => {
             name={handler.getDisplayText(intl)}
             icon={handler.getIcon()}
             onClick={async () => {
-                const newBlock = await handler.createBlock(card.rootId)
-                newBlock.parentId = card.id
-                newBlock.rootId = card.rootId
+                await handler.createBlock(card.rootId).then((newBlock) => {
+                    newBlock.parentId = card.id
+                    newBlock.rootId = card.rootId
 
-                const typeName = handler.getDisplayText(intl)
-                const description = intl.formatMessage({id: 'ContentBlock.addElement', defaultMessage: 'add {type}'}, {type: typeName})
-                mutator.performAsUndoGroup(async () => {
-                    const insertedBlock = await mutator.insertBlock(newBlock, description)
-                    contentOrder.splice(index, 0, insertedBlock.id)
-                    await mutator.changeCardContentOrder(card.id, card.fields.contentOrder, contentOrder, description)
-                })
+                    const typeName = handler.getDisplayText(intl)
+                    const description = intl.formatMessage({id: 'ContentBlock.addElement', defaultMessage: 'add {type}'}, {type: typeName})
+                    mutator.performAsUndoGroup(async () => {
+                        const insertedBlock = await mutator.insertBlock(newBlock, description)
+                        contentOrder.splice(index, 0, insertedBlock.id)
+                        await mutator.changeCardContentOrder(card.id, card.fields.contentOrder, contentOrder, description)
+                    })
+                }).catch((err) => alert(err))
             }}
         />
     )
