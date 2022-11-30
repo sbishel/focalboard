@@ -4,22 +4,21 @@ package sqlstore
 
 import (
 	"database/sql"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq" // postgres driver
-	"github.com/mattermost/focalboard/server/model"
 
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
 )
 
 type RetentionTableDeletionInfo struct {
-	Table         string
-	PrimaryKeys   []string
-	BoardIDColumn string
+	Table          string
+	PrimaryKeys    []string
+	ParentIDColumn string
+	ChildTables    []RetentionTableDeletionInfo
 }
 
 func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64, batchSize int64) (int64, error) {
@@ -28,63 +27,77 @@ func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64,
 		mlog.Int64("Raw Date", globalRetentionDate))
 	deleteTables := []RetentionTableDeletionInfo{
 		{
-			Table:         "blocks",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "board_id",
+			Table:          "blocks",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "board_id", //index
+			ChildTables: []RetentionTableDeletionInfo{
+				{
+					Table:          "subscriptions",
+					PrimaryKeys:    []string{"block_id", "subscriber_id"},
+					ParentIDColumn: "block_id", //index
+				},
+				{
+					Table:          "notification_hints",
+					PrimaryKeys:    []string{"block_id", "subscriber_id"},
+					ParentIDColumn: "block_id", //index
+				},
+			},
 		},
 		{
-			Table:         "blocks_history",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "board_id",
+			Table:          "blocks_history",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "board_id", //no index
 		},
 		{
-			Table:         "boards",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "id",
+			Table:          "boards",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "id", //index
 		},
 		{
-			Table:         "boards_history",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "id",
+			Table:          "boards_history",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "id", //index
 		},
 		{
-			Table:         "board_members",
-			PrimaryKeys:   []string{"board_id"},
-			BoardIDColumn: "board_id",
+			Table:          "board_members",
+			PrimaryKeys:    []string{"board_id"},
+			ParentIDColumn: "board_id", //index
 		},
 		{
-			Table:         "board_members_history",
-			PrimaryKeys:   []string{"board_id"},
-			BoardIDColumn: "board_id",
+			Table:          "board_members_history",
+			PrimaryKeys:    []string{"board_id"},
+			ParentIDColumn: "board_id", //index
 		},
 		{
-			Table:         "sharing",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "id",
+			Table:          "sharing",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "id", //index
 		},
 		{
-			Table:         "category_boards",
-			PrimaryKeys:   []string{"id"},
-			BoardIDColumn: "board_id",
+			Table:          "category_boards",
+			PrimaryKeys:    []string{"id"},
+			ParentIDColumn: "board_id", //no index
 		},
 	}
 
-	subBuilder := s.getQueryBuilder(db).
+	// Q1. Should use subquery or run subquery and use ids
+	// Q2. Can delete all with same field name?
+
+	blockGroupQuery := s.getQueryBuilder(db).
 		Select("board_id, MAX(update_at) AS maxDate").
 		From(s.tablePrefix + "blocks").
 		GroupBy("board_id")
+	blockGroupSubQuery, _, _ := blockGroupQuery.ToSql()
 
-	subQuery, _, _ := subBuilder.ToSql()
-
-	builder := s.getQueryBuilder(db).
+	boardsQuery := s.getQueryBuilder(db).
 		Select("id").
 		From(s.tablePrefix + "boards").
-		LeftJoin("( " + subQuery + " ) As subquery ON (subquery.board_id = id)").
+		LeftJoin("( " + blockGroupSubQuery + " ) As subquery ON (subquery.board_id = id)").
 		Where(sq.Lt{"maxDate": globalRetentionDate}).
 		Where(sq.NotEq{"team_id": "0"}).
 		Where(sq.Eq{"is_template": false})
 
-	rows, err := builder.Query()
+	rows, err := boardsQuery.Query()
 	if err != nil {
 		s.logger.Error(`dataRetention subquery ERROR`, mlog.Err(err))
 		return 0, err
@@ -97,12 +110,25 @@ func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64,
 
 	totalAffected := 0
 	if len(deleteIds) > 0 {
-		for _, table := range deleteTables {
-			affected, err := s.genericRetentionPoliciesDeletion(db, table, deleteIds, batchSize)
-			if err != nil {
-				return int64(totalAffected), err
+		boardsPerBatch := 20
+		for i := 0; i < len(deleteIds); i += boardsPerBatch {
+			boardsThisBatch := boardsPerBatch
+			if boardsPerBatch > len(deleteIds)-1 {
+				boardsThisBatch = len(deleteIds) - i
 			}
-			totalAffected += int(affected)
+			deleteIDsBatch := deleteIds[i : i+boardsThisBatch]
+
+			s.logger.Info("Processing Boards Data Retention",
+				mlog.Int("Total deleted ids", i),
+				mlog.Int("TotalAffected", totalAffected))
+
+			for _, table := range deleteTables {
+				affected, err := s.genericRetentionPoliciesDeletion(db, table, deleteIDsBatch, batchSize)
+				if err != nil {
+					return int64(totalAffected), err
+				}
+				totalAffected += int(affected)
+			}
 		}
 	}
 	s.logger.Info("Complete Boards Data Retention",
@@ -130,47 +156,66 @@ func idsFromRows(rows *sql.Rows) ([]string, error) {
 // using a sq.SelectBuilder which selects the rows to delete.
 func (s *SQLStore) genericRetentionPoliciesDeletion(
 	db sq.BaseRunner,
-	info RetentionTableDeletionInfo,
+	tableInfo RetentionTableDeletionInfo,
 	deleteIds []string,
 	batchSize int64,
 ) (int64, error) {
-	whereClause := info.BoardIDColumn + " IN ('" + strings.Join(deleteIds, "','") + "')"
+	var totalRowsAffected int64
+
+	for _, childInfo := range tableInfo.ChildTables {
+		// Select id from blocks(info.table) where Where(sq.Eq{info.ParentIDColumn: deleteIds})
+		selectQuery := s.getQueryBuilder(db).
+			Select(childInfo.ParentIDColumn).
+			From(s.tablePrefix + tableInfo.Table).
+			Where(sq.Eq{childInfo.ParentIDColumn: deleteIds})
+		selectString, _, _ := selectQuery.ToSql()
+
+		// Delete from subscriptions where block_id in (Select id from blocks(info.table) where Where(sq.Eq{info.ParentIDColumn: deleteIds})
+		deleteQuery := s.getQueryBuilder(db).
+			Delete(s.tablePrefix + childInfo.Table).
+			Where(childInfo.ParentIDColumn + " IN (" + selectString + ")")
+
+		if batchSize > 0 {
+			deleteQuery.Limit(uint64(batchSize))
+		}
+		rowsAffected, err := executeDeleteQuery(deleteQuery, batchSize)
+		if err != nil {
+			return 0, errors.Wrap(err, "failed to delete "+childInfo.Table)
+		}
+		totalRowsAffected += rowsAffected
+	}
+
 	deleteQuery := s.getQueryBuilder(db).
-		Delete(s.tablePrefix + info.Table).
-		Where(whereClause)
+		Delete(s.tablePrefix + tableInfo.Table).
+		Where(sq.Eq{tableInfo.ParentIDColumn: deleteIds})
 
 	if batchSize > 0 {
 		deleteQuery.Limit(uint64(batchSize))
-		primaryKeysStr := "(" + strings.Join(info.PrimaryKeys, ",") + ")"
-		if s.dbType != model.MysqlDBType {
-			selectQuery := s.getQueryBuilder(db).
-				Select(primaryKeysStr).
-				From(s.tablePrefix + info.Table).
-				Where(whereClause).
-				Limit(uint64(batchSize))
-
-			selectString, _, _ := selectQuery.ToSql()
-
-			deleteQuery = s.getQueryBuilder(db).
-				Delete(s.tablePrefix + info.Table).
-				Where(primaryKeysStr + " IN (" + selectString + ")")
-		}
 	}
 
+	rowsAffected, err := executeDeleteQuery(deleteQuery, batchSize)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to delete "+tableInfo.Table)
+	}
+	totalRowsAffected += rowsAffected
+	return totalRowsAffected, nil
+}
+
+func executeDeleteQuery(deleteQuery sq.DeleteBuilder, batchSize int64) (int64, error) {
+
 	var totalRowsAffected int64
-	var batchRowsAffected int64
 	for {
 		result, err := deleteQuery.Exec()
 		if err != nil {
-			return 0, errors.Wrap(err, "failed to delete "+info.Table)
+			return totalRowsAffected, errors.Wrap(err, "delete query failed")
 		}
 
-		batchRowsAffected, err = result.RowsAffected()
+		rowsAffected, err := result.RowsAffected()
 		if err != nil {
-			return 0, errors.Wrap(err, "failed to get rows affected for "+info.Table)
+			return totalRowsAffected, errors.Wrap(err, "failed to get rows affected for delete query")
 		}
-		totalRowsAffected += batchRowsAffected
-		if batchRowsAffected != batchSize {
+		totalRowsAffected += rowsAffected
+		if batchSize == 0 || rowsAffected != batchSize {
 			break
 		}
 	}
