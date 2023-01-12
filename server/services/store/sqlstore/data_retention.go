@@ -34,15 +34,14 @@ func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64,
 	cleanupTable := []OrphanTableCleanupInfo{
 		{
 			Table:            "subscriptions",
-			TableJoinColumn:  "block_id",
+			TableJoinColumn:  "block_id", //index
 			ParentTable:      "blocks",
 			ParentJoinColumn: "id",
 		},
 	}
 	deleteTables := []RetentionTableDeletionInfo{
 		{
-			Table: "blocks",
-			// PrimaryKeys:    []string{"id"},
+			Table:          "blocks",
 			ParentIDColumn: "board_id", //index
 		},
 		{
