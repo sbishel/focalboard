@@ -16,72 +16,64 @@ import (
 
 type RetentionTableDeletionInfo struct {
 	Table          string
-	PrimaryKeys    []string
 	ParentIDColumn string
-	ChildTables    []RetentionTableDeletionInfo
+}
+
+type OrphanTableCleanupInfo struct {
+	Table            string
+	TableJoinColumn  string
+	ParentTable      string
+	ParentJoinColumn string
 }
 
 func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64, batchSize int64) (int64, error) {
 	s.logger.Info("Start Boards Data Retention",
 		mlog.String("Global Retention Date", time.Unix(globalRetentionDate/1000, 0).String()),
 		mlog.Int64("Raw Date", globalRetentionDate))
+
+	cleanupTable := []OrphanTableCleanupInfo{
+		{
+			Table:            "subscriptions",
+			TableJoinColumn:  "block_id",
+			ParentTable:      "blocks",
+			ParentJoinColumn: "id",
+		},
+	}
 	deleteTables := []RetentionTableDeletionInfo{
 		{
-			Table:          "blocks",
-			PrimaryKeys:    []string{"id"},
+			Table: "blocks",
+			// PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "board_id", //index
-			ChildTables: []RetentionTableDeletionInfo{
-				{
-					Table:          "subscriptions",
-					PrimaryKeys:    []string{"block_id", "subscriber_id"},
-					ParentIDColumn: "block_id", //index
-				},
-				{
-					Table:          "notification_hints",
-					PrimaryKeys:    []string{"block_id", "subscriber_id"},
-					ParentIDColumn: "block_id", //index
-				},
-			},
 		},
 		{
 			Table:          "blocks_history",
-			PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "board_id", //no index
 		},
 		{
 			Table:          "boards",
-			PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "id", //index
 		},
 		{
 			Table:          "boards_history",
-			PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "id", //index
 		},
 		{
 			Table:          "board_members",
-			PrimaryKeys:    []string{"board_id"},
 			ParentIDColumn: "board_id", //index
 		},
 		{
 			Table:          "board_members_history",
-			PrimaryKeys:    []string{"board_id"},
 			ParentIDColumn: "board_id", //index
 		},
 		{
 			Table:          "sharing",
-			PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "id", //index
 		},
 		{
 			Table:          "category_boards",
-			PrimaryKeys:    []string{"id"},
 			ParentIDColumn: "board_id", //no index
 		},
 	}
-
-	// Q1. Should use subquery or run subquery and use ids
-	// Q2. Can delete all with same field name?
 
 	blockGroupQuery := s.getQueryBuilder(db).
 		Select("board_id, MAX(update_at) AS maxDate").
@@ -131,6 +123,17 @@ func (s *SQLStore) runDataRetention(db sq.BaseRunner, globalRetentionDate int64,
 			}
 		}
 	}
+
+	// Clean up Subscription table
+	s.logger.Info("Processing Boards Data Retention Cleanup")
+	for _, table := range cleanupTable {
+		affected, err := s.genericRetentionTableCleanup(db, table, batchSize)
+		if err != nil {
+			return int64(totalAffected), err
+		}
+		totalAffected += int(affected)
+	}
+
 	s.logger.Info("Complete Boards Data Retention",
 		mlog.Int("Total deletion ids", len(deleteIds)),
 		mlog.Int("TotalAffected", totalAffected))
@@ -162,32 +165,42 @@ func (s *SQLStore) genericRetentionPoliciesDeletion(
 ) (int64, error) {
 	var totalRowsAffected int64
 
-	for _, childInfo := range tableInfo.ChildTables {
-		// Select id from blocks(info.table) where Where(sq.Eq{info.ParentIDColumn: deleteIds})
-		selectQuery := s.getQueryBuilder(db).
-			Select(childInfo.ParentIDColumn).
-			From(s.tablePrefix + tableInfo.Table).
-			Where(sq.Eq{childInfo.ParentIDColumn: deleteIds})
-		selectString, _, _ := selectQuery.ToSql()
-
-		// Delete from subscriptions where block_id in (Select id from blocks(info.table) where Where(sq.Eq{info.ParentIDColumn: deleteIds})
-		deleteQuery := s.getQueryBuilder(db).
-			Delete(s.tablePrefix + childInfo.Table).
-			Where(childInfo.ParentIDColumn + " IN (" + selectString + ")")
-
-		if batchSize > 0 {
-			deleteQuery.Limit(uint64(batchSize))
-		}
-		rowsAffected, err := executeDeleteQuery(deleteQuery, batchSize)
-		if err != nil {
-			return 0, errors.Wrap(err, "failed to delete "+childInfo.Table)
-		}
-		totalRowsAffected += rowsAffected
-	}
-
 	deleteQuery := s.getQueryBuilder(db).
 		Delete(s.tablePrefix + tableInfo.Table).
 		Where(sq.Eq{tableInfo.ParentIDColumn: deleteIds})
+
+	if batchSize > 0 {
+		deleteQuery.Limit(uint64(batchSize))
+	}
+
+	rowsAffected, err := executeDeleteQuery(deleteQuery, batchSize)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to delete "+tableInfo.Table)
+	}
+	totalRowsAffected += rowsAffected
+	return totalRowsAffected, nil
+}
+
+func (s *SQLStore) genericRetentionTableCleanup(
+	db sq.BaseRunner,
+	tableInfo OrphanTableCleanupInfo,
+	batchSize int64,
+) (int64, error) {
+	var totalRowsAffected int64
+
+	// SELECT block_id FROM mattermost_test.focalboard_subscriptions AS S
+	// LEFT JOIN mattermost_test.focalboard_blocks AS B ON S.block_id = B.id
+	// WHERE isNull(B.id);
+	selectQuery := s.getQueryBuilder(db).
+		Select(tableInfo.TableJoinColumn).
+		From(s.tablePrefix + tableInfo.Table + " AS S").
+		LeftJoin((s.tablePrefix + tableInfo.ParentTable + " AS B ON S." + tableInfo.TableJoinColumn + " == B." + tableInfo.ParentJoinColumn)).
+		Where(sq.Eq{tableInfo.ParentJoinColumn: nil})
+	selectString, _, _ := selectQuery.ToSql()
+
+	deleteQuery := s.getQueryBuilder(db).
+		Delete(s.tablePrefix + tableInfo.Table).
+		Where(tableInfo.TableJoinColumn + " IN (" + selectString + ")")
 
 	if batchSize > 0 {
 		deleteQuery.Limit(uint64(batchSize))
